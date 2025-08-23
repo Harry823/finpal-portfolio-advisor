@@ -1,4 +1,5 @@
 'use client';
+import axios from 'axios';
 import { useState } from 'react';
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition'
 
@@ -8,28 +9,33 @@ const SpeechButton = () => {
         listening,
         resetTranscript,
     } = useSpeechRecognition();
+    
     const [loadingResponse, setLoadingResponse] = useState<boolean>(false);
     // TODO: plug error message in state and display
     const [errorMessage, setErrorMessage] = useState<string>();
-    const [responseText, setResponseText] = useState<string>('');
+    const [recommendationText, setRecommendationText] = useState<string>('');
+    const [rationaleText, setRationaleText] = useState<string>('');
 
 
     const getAiResponse = async () => {
-        setLoadingResponse(true);
         console.log('running ai response')
         try {
+            setLoadingResponse(true);
             const inputJSON = {
                 text: transcript
             };
             console.log(inputJSON);
+            setRecommendationText('test recommendation');
+            setRationaleText('test rationale');
             // TODO: use the given API to interact with AI
-            setTimeout(() =>  setResponseText('test response'), 5000)
+            // const fakeResponse = await axios.post('endpoint', inputJSON);
+
+            // setResponseText(fakeResponse.data.rationale);
         } catch(error) {
             console.log('error:', error);
         } finally {
             setLoadingResponse(false);
         }
-
     }
 
     const onClickStop = async () => {
@@ -70,7 +76,15 @@ const SpeechButton = () => {
             <p className='mt-5'>Voice Input</p>
             <p>{transcript}</p>
             <p className='mt-5'>Response</p>
-            <p>{loadingResponse ? 'thinking' : responseText}</p>
+            {loadingResponse 
+                ? <p>thinking... </p>
+                : (
+                    <>
+                        <p>{recommendationText}</p>
+                        <p>{rationaleText}</p>
+                    </>
+                )
+            }
         </div>
     );
 }
