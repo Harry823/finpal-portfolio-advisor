@@ -75,17 +75,65 @@ const SpeechButton = () => {
       </div>
       <p className="mt-5">Voice Input</p>
       <p>{transcript}</p>
-      <p className="mt-5">Response</p>
-      {loadingResponse ? (
-        <p>thinking... </p>
-      ) : (
-        <>
-          <h1 className="text-xl">recommendation</h1>
-          <p>{recommendationText}</p>
-          <h1 className="text-xl">rationale</h1>
-          <p>{rationaleText}</p>
-        </>
-      )}
+      <div className="mt-5 max-w-4xl">
+        {loadingResponse ? (
+          <div className="text-center">
+            <p className="text-lg animate-pulse">🤖 Analyzing...</p>
+          </div>
+        ) : (
+          <>
+            {recommendationText && rationaleText && (
+              <div className="space-y-6">
+                {/* Recommendation Section */}
+                <div className="bg-gray-900 rounded-lg p-6 border border-gray-700">
+                  <h2 className="text-xl font-semibold mb-4 text-blue-400">📊 Investment Analysis</h2>
+                  <div className="text-gray-300 whitespace-pre-line leading-relaxed">
+                    {recommendationText.replace(/\\n/g, '\n').replace(/\\t/g, '  ')}
+                  </div>
+                </div>
+
+                {/* Rationale Section */}
+                <div className="bg-gray-900 rounded-lg p-6 border border-gray-700">
+                  <h2 className="text-xl font-semibold mb-4 text-green-400">💡 Market Sentiment</h2>
+                  <div className="text-gray-300 leading-relaxed">
+                    {(() => {
+                      try {
+                        // Extract JSON from the nested structure
+                        const jsonMatch = rationaleText.match(/json\s*\n?\s*(\{.*\})/s);
+                        if (jsonMatch) {
+                          const parsedJson = JSON.parse(jsonMatch[1]);
+                          const reasoning = parsedJson.reasoning || parsedJson.rationale || '';
+                          const recommendation = parsedJson.recommendation || '';
+                          return (
+                            <div className="space-y-3">
+                              {recommendation && (
+                                <div className="flex items-center gap-2">
+                                  <span className="font-semibold text-yellow-400">Recommendation:</span>
+                                  <span className="px-3 py-1 bg-yellow-400/20 rounded-full text-yellow-300 font-medium">
+                                    {recommendation.toUpperCase()}
+                                  </span>
+                                </div>
+                              )}
+                              <div className="text-gray-300">
+                                {reasoning}
+                              </div>
+                            </div>
+                          );
+                        }
+                        // Fallback if JSON parsing fails
+                        return rationaleText.replace(/json\s*\n?\s*{[^}]*}/, '').replace(/\\n/g, ' ').trim();
+                      } catch (e) {
+                        // If all parsing fails, show cleaned text
+                        return rationaleText.replace(/json\s*\n?\s*{[^}]*}/, '').replace(/\\n/g, ' ').trim();
+                      }
+                    })()}
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 };
