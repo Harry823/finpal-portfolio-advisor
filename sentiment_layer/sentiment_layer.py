@@ -152,7 +152,7 @@ Company name:"""
         return "Unknown Company"
 
     # -------- JSON Processing --------
-    def _extract_first_json_block(self, text: str) -> Optional[Dict[str, Any]]:
+        def _extract_first_json_block(self, text: str) -> Optional[Dict[str, Any]]:
         """Extract and parse the first JSON block from text"""
         if not text:
             return None
@@ -204,7 +204,7 @@ Company name:"""
             logger.warning(f"Failed to parse JSON response: {e}")
             logger.debug(f"Raw JSON string: {json_str}")
             return None
-
+            
     # -------- Web Search --------
     def tavily_search(self, query: str, max_results: int = 10) -> List[WebDoc]:
         """Search for latest company information using Tavily API"""
