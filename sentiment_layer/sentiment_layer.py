@@ -445,22 +445,47 @@ app = FastAPI(title="FinPal Sentiment API", version="1.0.0")
 async def analyze_stock(request: AnalysisRequest):
     """Analyze a stock based on user query"""
     try:
-        # Get analysis
-        result, sources = engine.analyze_company_from_text(request.query)
+        # Get the raw LLM response directly
+        company = engine.extract_company_name(request.query)
         
-        # Extract rationale with stance
-        stance = result.conclusion.get("stance", "unknown")
-        rationale = result.conclusion.get("rationale", "No rationale available")
-        full_rationale = f"{rationale} Final recommendation: {stance.upper()}."
+        # Simple search and prompt
+        search_query = f"{company} latest news earnings outlook risks opportunities"
+        docs = engine.tavily_search(search_query, max_results=8)
+        
+        if not docs:
+            return AnalysisResponse(
+                rationale="Unable to find recent data for analysis. Consider a different approach.",
+                company=company,
+                timestamp=datetime.now().isoformat()
+            )
+        
+        # Build simple prompt
+        prompt = f"""Based on these sources about {company}, give me a simple investment recommendation in 1-2 sentences. Should I buy, hold, or avoid this stock and why?
+
+Sources:
+{engine._build_sources_block(docs)}
+
+Recommendation:"""
+        
+        # Get raw LLM response
+        raw_response = engine.friendli_generate(prompt)
+        
+        # Clean up the response (remove markdown if present)
+        if "```" in raw_response:
+            raw_response = raw_response.replace("```", "").strip()
         
         return AnalysisResponse(
-            rationale=full_rationale,
-            company=result.company,
-            timestamp=result.search_timestamp.isoformat()
+            rationale=raw_response,
+            company=company,
+            timestamp=datetime.now().isoformat()
         )
         
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
+        return AnalysisResponse(
+            rationale=f"Analysis failed: {str(e)}",
+            company="Unknown",
+            timestamp=datetime.now().isoformat()
+        )
 
 @app.get("/health")
 async def health_check():
@@ -470,3 +495,4 @@ async def health_check():
 if __name__ == "__main__":
     print("🚀 Starting FinPal Sentiment API...")
     uvicorn.run(app, host="0.0.0.0", port=8000)
+
