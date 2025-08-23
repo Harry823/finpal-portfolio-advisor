@@ -15,6 +15,7 @@ from dataclasses import dataclass
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional
 import uvicorn
@@ -23,6 +24,12 @@ import uvicorn
 DEBUG_RAW = True  # Set to False to silence raw prompt/response
 logging.basicConfig(level=logging.INFO, format="%(levelname)s:%(name)s:%(message)s")
 logger = logging.getLogger("finpal")
+
+FRIENDLI_API_KEY = "flp_ZAWxFW8oJQv5eeEB6Z7XdotbyLUnAQNP1Sc7xuvfoY3049"
+FRIENDLI_MODEL_ID = "depjr7ycw7u9mq1"  # Your dedicated endpoint ID
+FRIENDLI_CHAT_URL = "https://api.friendli.ai/dedicated/v1/chat/completions"
+TAVILY_API_KEY = "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"
+TAVILY_SEARCH_URL = "https://api.tavily.com/search"
 
 # # -------- API Keys (replace if you rotate) --------
 
@@ -441,6 +448,15 @@ engine = EnhancedFriendliAIEngine()
 # Create the FastAPI app
 app = FastAPI(title="FinPal Sentiment API", version="1.0.0")
 
+# Configure CORS to allow requests from localhost:3000
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],  # Allow frontend
+    allow_credentials=True,
+    allow_methods=["*"],  # Allow all methods (GET, POST, etc.)
+    allow_headers=["*"],  # Allow all headers
+)
+
 @app.post("/analyze", response_model=AnalysisResponse)
 async def analyze_stock(request: AnalysisRequest):
     """Analyze a stock based on user query"""
@@ -494,5 +510,4 @@ async def health_check():
 
 if __name__ == "__main__":
     print("🚀 Starting FinPal Sentiment API...")
-    uvicorn.run(app, host="0.0.0.0", port=8000)
-
+    uvicorn.run(app, host="0.0.0.0", port=8001)
