@@ -466,28 +466,5 @@ async def health_check():
 
 # -------- Demo Execution --------
 if __name__ == "__main__":
-    # Initialize the AI engine
-    engine = EnhancedFriendliAIEngine()
-    
-    # Check if you want to run the API or the demo
-    import sys
-    if len(sys.argv) > 1 and sys.argv[1] == "api":
-        print("🚀 Starting FinPal Sentiment API...")
-        uvicorn.run(app, host="0.0.0.0", port=8000)
-    else:
-        # Run the original demo
-        print("🧪 Running demo analysis...")
-        # Test query
-        test_sentence = "I'm considering to buy Figma stock, should I?"
-        
-        try:
-            # Get comprehensive analysis and sources
-            result, sources = engine.analyze_company_from_text(test_sentence)
-            
-            # Just print the JSON result
-            print(json.dumps({
-                "rationale": result.conclusion.get("rationale", "No rationale available")
-            }, indent=2))
-            
-        except Exception as e:
-            print(f"Error: {e}")
+    print("🚀 Starting FinPal Sentiment API...")
+    uvicorn.run(app, host="0.0.0.0", port=8000)
