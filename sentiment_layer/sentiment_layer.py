@@ -152,7 +152,6 @@ Company name:"""
         return "Unknown Company"
 
     # -------- JSON Processing --------
-    # -------- JSON Processing --------
     def _extract_first_json_block(self, text: str) -> Optional[Dict[str, Any]]:
         """Extract and parse the first JSON block from text"""
         if not text:
@@ -205,7 +204,7 @@ Company name:"""
             logger.warning(f"Failed to parse JSON response: {e}")
             logger.debug(f"Raw JSON string: {json_str}")
             return None
-            
+
     # -------- Web Search --------
     def tavily_search(self, query: str, max_results: int = 10) -> List[WebDoc]:
         """Search for latest company information using Tavily API"""
@@ -436,7 +435,10 @@ def export_analysis_to_json(analysis: EnhancedInsightResponse, sources: List[Web
         print(f"❌ Failed to export: {e}")
         return None
 
-# -------- FastAPI Wrapper --------
+# Initialize the engine BEFORE the FastAPI app
+engine = EnhancedFriendliAIEngine()
+
+# Create the FastAPI app
 app = FastAPI(title="FinPal Sentiment API", version="1.0.0")
 
 @app.post("/analyze", response_model=AnalysisResponse)
@@ -465,7 +467,6 @@ async def health_check():
     """Health check endpoint"""
     return {"status": "healthy", "service": "FinPal Sentiment API"}
 
-# -------- Demo Execution --------
 if __name__ == "__main__":
     print("🚀 Starting FinPal Sentiment API...")
     uvicorn.run(app, host="0.0.0.0", port=8000)
