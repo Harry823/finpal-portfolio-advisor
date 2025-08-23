@@ -14,6 +14,10 @@ import requests
 from dataclasses import dataclass
 from typing import List, Dict, Any, Optional
 from datetime import datetime
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+from typing import Optional
+import uvicorn
 
 # -------- Configuration --------
 DEBUG_RAW = True  # Set to False to silence raw prompt/response
@@ -43,6 +47,16 @@ class EnhancedInsightResponse:
     conclusion: Dict[str, Any]
     search_timestamp: datetime
     sources_analyzed: int
+
+# Add these models after your existing dataclasses
+class AnalysisRequest(BaseModel):
+    query: str
+    company: Optional[str] = None
+
+class AnalysisResponse(BaseModel):
+    rationale: str
+    company: str
+    timestamp: str
 
 # -------- Enhanced AI Engine --------
 class EnhancedFriendliAIEngine:
@@ -421,22 +435,59 @@ def export_analysis_to_json(analysis: EnhancedInsightResponse, sources: List[Web
         print(f"❌ Failed to export: {e}")
         return None
 
+# -------- FastAPI Wrapper --------
+app = FastAPI(title="FinPal Sentiment API", version="1.0.0")
+
+@app.post("/analyze", response_model=AnalysisResponse)
+async def analyze_stock(request: AnalysisRequest):
+    """Analyze a stock based on user query"""
+    try:
+        # Get analysis
+        result, sources = engine.analyze_company_from_text(request.query)
+        
+        # Extract rationale with stance
+        stance = result.conclusion.get("stance", "unknown")
+        rationale = result.conclusion.get("rationale", "No rationale available")
+        full_rationale = f"{rationale} Final recommendation: {stance.upper()}."
+        
+        return AnalysisResponse(
+            rationale=full_rationale,
+            company=result.company,
+            timestamp=result.search_timestamp.isoformat()
+        )
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
+
+@app.get("/health")
+async def health_check():
+    """Health check endpoint"""
+    return {"status": "healthy", "service": "FinPal Sentiment API"}
+
 # -------- Demo Execution --------
 if __name__ == "__main__":
     # Initialize the AI engine
     engine = EnhancedFriendliAIEngine()
     
-    # Test query
-    test_sentence = "I'm considering to buy Figma stock, should I?"
-    
-    try:
-        # Get comprehensive analysis and sources
-        result, sources = engine.analyze_company_from_text(test_sentence)
+    # Check if you want to run the API or the demo
+    import sys
+    if len(sys.argv) > 1 and sys.argv[1] == "api":
+        print("🚀 Starting FinPal Sentiment API...")
+        uvicorn.run(app, host="0.0.0.0", port=8000)
+    else:
+        # Run the original demo
+        print("🧪 Running demo analysis...")
+        # Test query
+        test_sentence = "I'm considering to buy Figma stock, should I?"
         
-        # Just print the JSON result
-        print(json.dumps({
-            "rationale": result.conclusion.get("rationale", "No rationale available")
-        }, indent=2))
-        
-    except Exception as e:
-        print(f"Error: {e}")
+        try:
+            # Get comprehensive analysis and sources
+            result, sources = engine.analyze_company_from_text(test_sentence)
+            
+            # Just print the JSON result
+            print(json.dumps({
+                "rationale": result.conclusion.get("rationale", "No rationale available")
+            }, indent=2))
+            
+        except Exception as e:
+            print(f"Error: {e}")
