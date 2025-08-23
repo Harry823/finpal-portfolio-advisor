@@ -152,58 +152,59 @@ Company name:"""
         return "Unknown Company"
 
     # -------- JSON Processing --------
+    # -------- JSON Processing --------
     def _extract_first_json_block(self, text: str) -> Optional[Dict[str, Any]]:
-    """Extract and parse the first JSON block from text"""
-    if not text:
-        return None
-    
-    # Look for JSON content between backticks if present
-    if "```json" in text:
-        start_marker = "```json"
-        end_marker = "```"
-        start_idx = text.find(start_marker) + len(start_marker)
-        end_idx = text.find(end_marker, start_idx)
-        if start_idx > 0 and end_idx > start_idx:
-            json_str = text[start_idx:end_idx].strip()
+        """Extract and parse the first JSON block from text"""
+        if not text:
+            return None
+        
+        # Look for JSON content between backticks if present
+        if "```json" in text:
+            start_marker = "```json"
+            end_marker = "```"
+            start_idx = text.find(start_marker) + len(start_marker)
+            end_idx = text.find(end_marker, start_idx)
+            if start_idx > 0 and end_idx > start_idx:
+                json_str = text[start_idx:end_idx].strip()
+            else:
+                # Fallback to regular JSON extraction
+                start_idx = text.find("{")
+                end_idx = text.rfind("}")
+                if start_idx == -1 or end_idx == -1 or end_idx <= start_idx:
+                    return None
+                json_str = text[start_idx:end_idx + 1]
         else:
-            # Fallback to regular JSON extraction
+            # Regular JSON extraction
             start_idx = text.find("{")
             end_idx = text.rfind("}")
             if start_idx == -1 or end_idx == -1 or end_idx <= start_idx:
                 return None
             json_str = text[start_idx:end_idx + 1]
-    else:
-        # Regular JSON extraction
-        start_idx = text.find("{")
-        end_idx = text.rfind("}")
-        if start_idx == -1 or end_idx == -1 or end_idx <= start_idx:
+        
+        try:
+            # Clean up common JSON issues
+            json_str = json_str.replace("[S#1]", "[S1]")
+            json_str = json_str.replace("[S#2]", "[S2]")
+            json_str = json_str.replace("[S#3]", "[S3]")
+            json_str = json_str.replace("[S#4]", "[S4]")
+            json_str = json_str.replace("[S#5]", "[S5]")
+            json_str = json_str.replace("[S#6]", "[S6]")
+            json_str = json_str.replace("[S#7]", "[S7]")
+            json_str = json_str.replace("[S#8]", "[S8]")
+            json_str = json_str.replace("[S#9]", "[S9]")
+            json_str = json_str.replace("[S#10]", "[S10]")
+            
+            # Also fix any remaining [S# pattern
+            json_str = re.sub(r'\[S#(\d+)\]', r'[S\1]', json_str)
+            
+            parsed = json.loads(json_str)
+            logger.info("Successfully parsed JSON response")
+            return parsed
+            
+        except json.JSONDecodeError as e:
+            logger.warning(f"Failed to parse JSON response: {e}")
+            logger.debug(f"Raw JSON string: {json_str}")
             return None
-        json_str = text[start_idx:end_idx + 1]
-    
-    try:
-        # Clean up common JSON issues
-        json_str = json_str.replace("[S#1]", "[S1]")
-        json_str = json_str.replace("[S#2]", "[S2]")
-        json_str = json_str.replace("[S#3]", "[S3]")
-        json_str = json_str.replace("[S#4]", "[S4]")
-        json_str = json_str.replace("[S#5]", "[S5]")
-        json_str = json_str.replace("[S#6]", "[S6]")
-        json_str = json_str.replace("[S#7]", "[S7]")
-        json_str = json_str.replace("[S#8]", "[S8]")
-        json_str = json_str.replace("[S#9]", "[S9]")
-        json_str = json_str.replace("[S#10]", "[S10]")
-        
-        # Also fix any remaining [S# pattern
-        json_str = re.sub(r'\[S#(\d+)\]', r'[S\1]', json_str)
-        
-        parsed = json.loads(json_str)
-        logger.info("Successfully parsed JSON response")
-        return parsed
-        
-    except json.JSONDecodeError as e:
-        logger.warning(f"Failed to parse JSON response: {e}")
-        logger.debug(f"Raw JSON string: {json_str}")
-        return None
             
     # -------- Web Search --------
     def tavily_search(self, query: str, max_results: int = 10) -> List[WebDoc]:
